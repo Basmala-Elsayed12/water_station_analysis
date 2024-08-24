@@ -305,7 +305,7 @@ CREATE TABLE leakages (
 WITH leakage_data AS (
     SELECT
         station_id,
-        station_location AS leakage_location,  -- Use station location as the leakage location,
+        station_name AS leakage_location,  -- Use station location as the leakage location,
         CURRENT_TIMESTAMP - INTERVAL '1 day' * (RANDOM() * 30 + 1)::int AS maintenance_request_time,  -- Random request time within the last 30 days
         CURRENT_TIMESTAMP - INTERVAL '1 day' * (RANDOM() * 30)::int + 
             INTERVAL '1 hour' * (RANDOM() * 23)::int + 
@@ -314,7 +314,7 @@ WITH leakage_data AS (
     FROM
         water_stations
 	WHERE
-        RANDOM() < 0.10  -- Select approximately 10% of the stations
+        RANDOM() < 0.25  -- Select approximately 10% of the stations
     ORDER BY RANDOM()
     LIMIT 20
 )
@@ -330,5 +330,4 @@ FROM
     leakage_data;
 
 
-
-
+ 

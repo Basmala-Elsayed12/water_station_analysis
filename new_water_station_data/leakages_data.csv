@@ -1,0 +1,5 @@
+"leakage_id","station_id","maintenance_request_time","datetime_maintenance_was_performed","leakage_location","wasted_water_litres"
+6,135,"2024-08-07 14:52:07.894894","2024-08-09 03:23:07.894894","Station2_Makkah","219.10"
+7,129,"2024-08-05 14:52:07.894894","2024-08-07 05:27:07.894894","Station4_Riyadh","270.08"
+8,145,"2024-08-01 14:52:07.894894","2024-08-03 08:36:07.894894","Station4_Madinah","333.87"
+9,144,"2024-07-30 14:52:07.894894","2024-08-01 09:38:07.894894","Station3_Madinah","384.90"
