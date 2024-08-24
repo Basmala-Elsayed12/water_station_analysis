@@ -141,28 +141,25 @@ CREATE TABLE water_flow (
 );
 
 
-
-
 WITH water_flow_data AS (
     SELECT
-        station_id,  -- Select existing station IDs
-        CASE 
-            -- Randomly decide if the station is operational (On/Off)
-            WHEN RANDOM() > 0.2 THEN 'On' 
-            ELSE 'Off' 
-        END AS status,
-        -- Randomly generate the number of operational pumps (0 to 8 pumps)
-        CASE 
-            WHEN RANDOM() > 0.2 THEN ROUND(RANDOM() * 7 + 1)::int  -- 1 to 8 operational pumps
-            ELSE 0  -- No operational pumps if status is Off
-        END AS operational_pumps,
+        ws.station_id,  
+        p.status,
+        SUM(
+            CASE 
+                WHEN p.status = 'On' THEN 1 
+                ELSE 0 
+            END
+        ) AS operational_pumps_count, -- Count the number of operational pumps (status = 'On')
         CURRENT_TIMESTAMP - INTERVAL '1 day' * (RANDOM() * 30 + 1)::int + 
         INTERVAL '1 hour' * (RANDOM() * 23 + 1)::int + 
         INTERVAL '1 minute' * (RANDOM() * 59 + 1)::int AS datetime  -- Random datetime within the last 30 days
     FROM
-        water_stations  
-    ORDER BY RANDOM()  
-    LIMIT 20 
+        water_stations ws
+    JOIN
+        pumps p ON ws.station_id = p.station_id
+    GROUP BY 
+        ws.station_id, p.status
 )
 INSERT INTO water_flow (station_id, datetime, total_input_flow, total_output_flow, total_output_pressure)
 SELECT
@@ -171,24 +168,25 @@ SELECT
 
     -- Calculate total input flow based on the number of operational pumps (Assume each pump provides 1000-1200 L/hour)
     CASE 
-        WHEN operational_pumps > 0 THEN operational_pumps * ROUND((RANDOM() * 200 + 1000)::numeric, 2)  -- 1000 to 1200 L/hour per pump
+        WHEN operational_pumps_count > 0 THEN operational_pumps_count * ROUND((RANDOM() * 200 + 1000)::numeric, 2)  -- 1000 to 1200 L/hour per pump
         ELSE 0  -- No flow if no pumps are operational
     END AS total_input_flow,
 
     -- Calculate total output flow based on the number of operational pumps (Assume each pump provides 800-1000 L/hour to the city network)
     CASE 
-        WHEN operational_pumps > 0 THEN operational_pumps * ROUND((RANDOM() * 200 + 800)::numeric, 2)  -- 800 to 1000 L/hour per pump
+        WHEN operational_pumps_count > 0 THEN operational_pumps_count * ROUND((RANDOM() * 200 + 800)::numeric, 2)  -- 800 to 1000 L/hour per pump
         ELSE 0  -- No flow if no pumps are operational
     END AS total_output_flow,
 
     -- Calculate total output pressure based on the number of operational pumps (Assume each pump adds 2-3 bar pressure)
     CASE 
-        WHEN operational_pumps > 0 THEN ROUND((operational_pumps * (RANDOM() * 1 + 2))::numeric, 2)  -- 2 to 3 bar per pump
+        WHEN operational_pumps_count > 0 THEN ROUND((operational_pumps_count * (RANDOM() * 1 + 2))::numeric, 2)  -- 2 to 3 bar per pump
         ELSE 0  -- No pressure if no pumps are operational
     END AS total_output_pressure
 
 FROM
     water_flow_data;
+
 
 
 
@@ -259,7 +257,7 @@ CREATE TABLE city_network_maintenance (
     station_id INT REFERENCES water_stations(station_id),
     datetime TIMESTAMP NOT NULL,
     city_network_maintenance_time_hours DECIMAL(5, 2) NOT NULL,  -- Duration of maintenance in hours
-     city_network_maintenance_cost DECIMAL(10, 2) NOT NULL,      -- Cost of the maintenance
+    city_network_maintenance_cost DECIMAL(10, 2) NOT NULL,      -- Cost of the maintenance
     num_employees INT NOT NULL,                    -- Number of employees involved in maintenance
     num_equipment INT NOT NULL                     -- Number of equipment used in maintenance
 );
